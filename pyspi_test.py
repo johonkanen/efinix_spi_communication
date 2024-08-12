@@ -14,14 +14,14 @@ print(Ftdi.list_devices())
 # Initialize the SPI controller
 spi = SpiController()
 
-# Configure the FTDI device, replace 'ftdi:///1' with your actual device address
+# Configure the FTDI device, replace 'ftdi://ftdi:2232:0:2/1' with your actual device address
 spi.configure('ftdi://ftdi:2232:0:2/1')
 
 # Get an SPI port, configure the clock frequency, and other settings
-slave = spi.get_port(cs=0, freq=10E6, mode=0)  # cs=0 is Chip Select 0, freq=1 MHz, mode=0 (CPOL=0, CPHA=0)
+slave = spi.get_port(cs=0, freq=2E6, mode=0)  # cs=0 is Chip Select 0, freq=1 MHz, mode=0 (CPOL=0, CPHA=0)
 
 # Write data to the SPI device
-data_to_send = [0xb5, 0x1d]  # Replace with the data you want to send
+data_to_send = [0xac, 0xdc]  # Replace with the data you want to send
 response = slave.exchange(data_to_send, duplex=True)
 
 # Read the response from the SPI device
