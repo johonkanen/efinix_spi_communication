@@ -1,0 +1,12 @@
+outflow/
+ip/
+work_pnr/
+work_syn/
+*.swp*
+*.*~
+xsim.dir/
+work/
+xvlog.*
+*.lock
+*.json
+*.bak
