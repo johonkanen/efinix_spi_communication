@@ -6,36 +6,79 @@ library ieee;
 
 package spi_master_pkg is
 
+    subtype byte is std_logic_vector(7 downto 0);
+    type bytearray is array (natural range <>) of byte;
+
     type spi_master_record is record
         clock_divider : clock_divider_record;
+        number_of_bytes_to_send : natural;
+        spi_clock   : std_logic;
+        spi_cs_in   : std_logic;
+        spi_data_from_master : std_logic;
+        output_shift_register : byte;
     end record;
 
-    constant init_spi_master : spi_master_record := (clock_divider => init_clock_divider);
+    constant init_spi_master : spi_master_record := (init_clock_divider, 0, '0', '1', '1', (others => '0'));
 
+-------------------------------------------------
     procedure create_spi_master (
         signal self : inout spi_master_record;
-        signal spi_clock : out std_logic;
-        signal spi_cs_in : out std_logic;
-        signal spi_data_in : out std_logic);
+        spi_data_slave_to_master : in std_logic);
+-------------------------------------------------
+    procedure transmit_number_of_bytes (
+        signal self : inout spi_master_record;
+        number_of_bytes_to_send : natural);
+-------------------------------------------------
+    procedure load_transmit_register (
+        signal self : inout spi_master_record;
+        word_to_be_sent : byte);
+-------------------------------------------------
 
 end package spi_master_pkg;
 
 package body spi_master_pkg is
 
+-------------------------------------------------
     procedure create_spi_master
     (
         signal self : inout spi_master_record;
-        signal spi_clock : out std_logic;
-        signal spi_cs_in : out std_logic;
-        signal spi_data_in : out std_logic
+        spi_data_slave_to_master : in std_logic
     ) is
     begin
         create_clock_divider(self.clock_divider);
+        if clock_divider_is_ready(self.clock_divider) then
+            self.spi_cs_in <= '1';
+        end if;
+
+        self.spi_clock <= get_clock_from_divider(self.clock_divider);
         
     end create_spi_master;
 
-end package body spi_master_pkg;
+-------------------------------------------------
+    procedure transmit_number_of_bytes
+    (
+        signal self : inout spi_master_record;
+        number_of_bytes_to_send : natural
+    ) is
+    begin
+        request_number_of_clock_pulses(self.clock_divider, number_of_bytes_to_send*8);
+        self.number_of_bytes_to_send <= number_of_bytes_to_send;
+        self.spi_cs_in <= '0';
+        
+    end transmit_number_of_bytes;
 
+-------------------------------------------------
+    procedure load_transmit_register
+    (
+        signal self : inout spi_master_record;
+        word_to_be_sent : byte
+    ) is
+    begin
+        self.transmit_buffer <= word_to_be_sent;
+    end load_transmit_register;
+
+end package body spi_master_pkg;
+-------------------------------------------------
 
 LIBRARY ieee  ; 
     USE ieee.NUMERIC_STD.all  ; 
@@ -62,14 +105,10 @@ architecture vunit_simulation of spi_communication_tb is
     signal simulation_counter  : natural   := 0;
     -----------------------------------
     -- simulation specific signals ----
-    signal spi_clock    : std_logic := '0';
-    signal spi_cs_in    : std_logic := '1';
     signal spi_data_out : std_logic;
-    signal spi_data_from_master : std_logic;
 
     signal user_led : std_logic_vector(3 downto 0);
 
-    signal clock_divider : clock_divider_record := init_clock_divider;
     signal self : spi_master_record := init_spi_master;
 
 begin
@@ -92,36 +131,25 @@ begin
         if rising_edge(simulator_clock) then
             simulation_counter <= simulation_counter + 1;
 
-            create_spi_master(self,
-                spi_clock   ,
-                spi_cs_in   ,
-                spi_data_from_master);
-
-            create_clock_divider(clock_divider);
-            spi_clock <= get_clock_from_divider(clock_divider);
-
+            create_spi_master(self, spi_data_out);
 
             CASE simulation_counter is
-                WHEN 5 => request_number_of_clock_pulses(clock_divider, 16 * 4);
-                            spi_cs_in <= '0';
+                WHEN 5 => transmit_number_of_bytes(self,8);
                 WHEN others => --do nothing
             end CASE;
 
 
-            if clock_divider_is_ready(clock_divider) then
-                spi_cs_in <= '1';
-            end if;
 
         end if; -- rising_edge
     end process stimulus;	
 ------------------------------------------------------------------------
     dut_top : entity work.top
     port map(
-        main_clock      => simulator_clock,
-        spi_data_in     => '1'          ,
-        spi_clock       => spi_clock    ,
-        spi_cs_in       => spi_cs_in    ,
-        spi_data_out    => spi_data_out ,
+        main_clock      => simulator_clock           ,
+        spi_data_in     => self.spi_data_from_master ,
+        spi_clock       => self.spi_clock            ,
+        spi_cs_in       => self.spi_cs_in            ,
+        spi_data_out    => spi_data_out              ,
         user_led        => user_led
     );
 ------------------------------------------------------------------------

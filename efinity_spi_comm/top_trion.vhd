@@ -56,7 +56,7 @@ package body spi_communication_pkg is
 
         if falling_edge_detected(self.cs_buffer) then
             self.transmitted_data_index <= 1;
-            self.received_byte_index             <= 0;
+            self.received_byte_index    <= 0;
             self.output_data_buffer     <= frame_out_of_spi(frame_out_of_spi'left-1 downto 0) & '0';
             spi_data_out                <= get_first_bit(std_logic_vector(frame_out_of_spi));
         end if;
