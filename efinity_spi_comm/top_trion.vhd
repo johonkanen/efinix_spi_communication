@@ -14,18 +14,18 @@ package spi_communication_pkg is
         transmitted_data_index : natural range 0 to 15;
         received_byte_index    : natural range 0 to 15;
         byte_is_ready          : boolean;
-        received_byte            : std_logic_vector(7 downto 0);
+        received_byte          : std_logic_vector(7 downto 0);
     end record;
 
     constant init_spi_receiver : spi_receiver_record := (
         (others => '0'), (others => '0'), (others => '0'), (others => '0'), 0, 0, 0, false, (others => '0'));
 
     procedure create_spi_receiver (
-        signal self : inout spi_receiver_record;
-        spi_cs : in std_logic;
-        spi_clock : in std_logic;
+        signal self         : inout spi_receiver_record;
+        spi_cs              : in std_logic;
+        spi_clock           : in std_logic;
         signal spi_data_out : out std_logic;
-        frame_out_of_spi : in std_logic_vector(15 downto 0));
+        frame_out_of_spi    : in std_logic_vector(15 downto 0));
 
 -------------------------------------------
    function rising_edge_detected ( signal_buffer : std_logic_vector )

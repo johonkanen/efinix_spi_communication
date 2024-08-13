@@ -10,12 +10,12 @@ package spi_master_pkg is
     type bytearray is array (natural range <>) of byte;
 
     type spi_master_record is record
-        clock_divider : clock_divider_record;
+        clock_divider           : clock_divider_record;
         number_of_bytes_to_send : natural;
-        spi_clock   : std_logic;
-        spi_cs_in   : std_logic;
-        spi_data_from_master : std_logic;
-        output_shift_register : byte;
+        spi_clock               : std_logic;
+        spi_cs_in               : std_logic;
+        spi_data_from_master    : std_logic;
+        output_shift_register   : byte;
     end record;
 
     constant init_spi_master : spi_master_record := (init_clock_divider, 0, '0', '1', '1', (others => '0'));
@@ -24,10 +24,12 @@ package spi_master_pkg is
     procedure create_spi_master (
         signal self : inout spi_master_record;
         spi_data_slave_to_master : in std_logic);
+    
 -------------------------------------------------
     procedure transmit_number_of_bytes (
         signal self : inout spi_master_record;
         number_of_bytes_to_send : natural);
+
 -------------------------------------------------
     procedure load_transmit_register (
         signal self : inout spi_master_record;
@@ -74,7 +76,7 @@ package body spi_master_pkg is
         word_to_be_sent : byte
     ) is
     begin
-        self.transmit_buffer <= word_to_be_sent;
+        self.output_shift_register <= word_to_be_sent;
     end load_transmit_register;
 
 end package body spi_master_pkg;
@@ -86,7 +88,6 @@ LIBRARY ieee  ;
     use ieee.math_real.all;
 
     use work.clock_divider_pkg.all;
-
     use work.spi_master_pkg.all;
 
 library vunit_lib;
@@ -137,8 +138,6 @@ begin
                 WHEN 5 => transmit_number_of_bytes(self,8);
                 WHEN others => --do nothing
             end CASE;
-
-
 
         end if; -- rising_edge
     end process stimulus;	
