@@ -5,18 +5,20 @@ library ieee;
 package spi_communication_pkg is
 
     type spi_receiver_record is record
-        cs_buffer          : std_logic_vector(1 downto 0);
-        spi_clock_buffer   : std_logic_vector(1 downto 0);
+        cs_buffer          : std_logic_vector(2 downto 0);
+        spi_clock_buffer   : std_logic_vector(2 downto 0);
         input_data_buffer  : std_logic_vector(15 downto 0);
         output_data_buffer : std_logic_vector(15 downto 0);
 
         i                      : natural range 0 to 4;
         transmitted_data_index : natural range 0 to 15;
-        word_index             : natural range 0 to 15;
+        received_byte_index    : natural range 0 to 15;
+        byte_is_ready          : boolean;
+        received_byte            : std_logic_vector(7 downto 0);
     end record;
 
     constant init_spi_receiver : spi_receiver_record := (
-        (others => '0'), (others => '0'), (others => '0'), (others => '0'), 0, 0, 0);
+        (others => '0'), (others => '0'), (others => '0'), (others => '0'), 0, 0, 0, false, (others => '0'));
 
     procedure create_spi_receiver (
         signal self : inout spi_receiver_record;
@@ -54,17 +56,20 @@ package body spi_communication_pkg is
 
         if falling_edge_detected(self.cs_buffer) then
             self.transmitted_data_index <= 1;
-            self.word_index             <= 0;
+            self.received_byte_index             <= 0;
             self.output_data_buffer     <= frame_out_of_spi(frame_out_of_spi'left-1 downto 0) & '0';
             spi_data_out                <= get_first_bit(std_logic_vector(frame_out_of_spi));
         end if;
 
+        self.byte_is_ready <=false;
         if falling_edge_detected(self.spi_clock_buffer) then
-            if self.transmitted_data_index < 15 then
+            if self.transmitted_data_index < 8 then
                 self.transmitted_data_index <= self.transmitted_data_index + 1;
             else
                 self.transmitted_data_index <= 0;
-                self.word_index             <= self.word_index + 1;
+                self.received_byte_index <= self.received_byte_index + 1;
+                self.byte_is_ready <=true;
+                self.received_byte <= self.output_data_buffer(6 downto 0) & '0';
             end if;
             self.output_data_buffer <= self.output_data_buffer(self.output_data_buffer'left-1 downto 0) & '0';
             spi_data_out       <= self.output_data_buffer(self.output_data_buffer'left);
@@ -132,7 +137,7 @@ architecture rtl of top is
     signal ledstate : std_logic_vector(3 downto 0) := "0101";
     constant testi  : std_logic_vector(15 downto 0) := x"acdc";
 
-    signal testidata              : unsigned(15 downto 0) := (15 => '1', 9 => '1', 8 => '1', others => '1');
+    signal testidata : unsigned(15 downto 0) := (15 => '1', 9 => '1', 8 => '1', others => '1');
 
     type std15array is array (integer range 0 to 4) of std_logic_vector(15 downto 0);
     constant output_data : std15array :=(x"acdc", x"aaaa", x"5555", x"ffff", x"1234");
@@ -148,7 +153,7 @@ begin
         if rising_edge(main_clock) then
 
             if falling_edge_detected(self.cs_buffer) then
-                testidata                   <= testidata + 3;
+                testidata <= testidata + 3;
             end if;
 
             create_spi_receiver(self, spi_cs_in, spi_clock, spi_data_out, std_logic_vector(testidata));

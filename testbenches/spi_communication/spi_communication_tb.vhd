@@ -102,7 +102,7 @@ begin
 
 
             CASE simulation_counter is
-                WHEN 5 => request_number_of_clock_pulses(clock_divider, 16);
+                WHEN 5 => request_number_of_clock_pulses(clock_divider, 16 * 4);
                             spi_cs_in <= '0';
                 WHEN others => --do nothing
             end CASE;
