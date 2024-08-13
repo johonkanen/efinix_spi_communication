@@ -1,0 +1,3 @@
+[submodule "source/vhdl_serial"]
+	path = source/vhdl_serial
+	url = https://github.com/johonkanen/vhdl_serial.git
