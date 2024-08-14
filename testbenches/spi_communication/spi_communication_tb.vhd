@@ -1,10 +1,13 @@
+
 library ieee;
     use ieee.std_logic_1164.all;
     use ieee.numeric_std.all;
 
-    use work.clock_divider_pkg.all;
-
 package spi_master_pkg is
+
+    package clock_divider_pkg is new work.clock_divider_generic_pkg 
+        generic map(g_count_max => 11);
+    use clock_divider_pkg.all;
 
     subtype byte is std_logic_vector(7 downto 0);
     type bytearray is array (natural range <>) of byte;
@@ -119,6 +122,7 @@ begin
     begin
         test_runner_setup(runner, runner_cfg);
         wait for simtime_in_clocks*clock_period;
+        check(user_led = "1111", "leds were not turned on");
         test_runner_cleanup(runner); -- Simulation ends here
         wait;
     end process simtime;	
@@ -135,7 +139,7 @@ begin
             create_spi_master(self, spi_data_out);
 
             CASE simulation_counter is
-                WHEN 5 => transmit_number_of_bytes(self,8);
+                WHEN 50 => transmit_number_of_bytes(self,8);
                 WHEN others => --do nothing
             end CASE;
 
@@ -144,13 +148,12 @@ begin
 ------------------------------------------------------------------------
     dut_top : entity work.top
     port map(
-        main_clock      => simulator_clock           ,
-        spi_data_in     => self.spi_data_from_master ,
-        spi_clock       => self.spi_clock            ,
-        spi_cs_in       => self.spi_cs_in            ,
-        spi_data_out    => spi_data_out              ,
-        user_led        => user_led
+        main_clock   => simulator_clock           ,
+        spi_data_in  => self.spi_data_from_master ,
+        spi_clock    => self.spi_clock            ,
+        spi_cs_in    => self.spi_cs_in            ,
+        spi_data_out => spi_data_out              ,
+        user_led     => user_led
     );
 ------------------------------------------------------------------------
-
 end vunit_simulation;

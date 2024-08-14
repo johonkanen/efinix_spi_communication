@@ -134,7 +134,7 @@ end entity top;
 
 architecture rtl of top is
 
-    signal ledstate : std_logic_vector(3 downto 0) := "0101";
+    signal ledstate : std_logic_vector(3 downto 0) := "1111";
     constant testi  : std_logic_vector(15 downto 0) := x"acdc";
 
     signal testidata : unsigned(15 downto 0) := (15 => '1', 9 => '1', 8 => '1', others => '1');

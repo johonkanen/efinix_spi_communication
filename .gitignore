@@ -3,6 +3,7 @@ ip/
 work_pnr/
 work_syn/
 *.swp*
+*.swo*
 *.*~
 xsim.dir/
 work/
