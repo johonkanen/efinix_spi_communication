@@ -1,10 +1,10 @@
+
 LIBRARY ieee  ; 
     USE ieee.NUMERIC_STD.all  ; 
     USE ieee.std_logic_1164.all  ; 
     use ieee.math_real.all;
 
     use work.clock_divider_pkg.all;
-    use work.spi_master_pkg.all;
 
 library vunit_lib;
 context vunit_lib.vunit_context;
@@ -14,6 +14,10 @@ entity spi_communication_tb is
 end;
 
 architecture vunit_simulation of spi_communication_tb is
+
+    package spi_transmitter_pkg is new work.spi_transmitter_generic_pkg generic map(g_clock_divider => 5);
+    use spi_transmitter_pkg.all;
+
 
     constant clock_period      : time    := 1 ns;
     constant simtime_in_clocks : integer := 5000;
@@ -26,10 +30,12 @@ architecture vunit_simulation of spi_communication_tb is
 
     signal user_led : std_logic_vector(3 downto 0);
 
-    signal self : spi_master_record := init_spi_master;
-
+    signal self : spi_transmitter_record := init_spi_transmitter;
 
     signal capture_buffer : std_logic_vector(15 downto 0);
+    signal packet_counter : natural := 0;
+
+    constant test_frame : bytearray :=(0 => x"ac", 1=> x"dc");
 
 begin
 
@@ -52,15 +58,16 @@ begin
         if rising_edge(simulator_clock) then
             simulation_counter <= simulation_counter + 1;
 
-            create_spi_master(self, spi_data_out);
+            create_spi_transmitter(self, spi_data_out);
 
             CASE simulation_counter is
-                WHEN 50 => transmit_number_of_bytes(self,2);
-                load_transmit_register(self, x"acdc");
+                WHEN 50 => 
+                    transmit_byte(self, test_frame(0));
                 WHEN others => --do nothing
             end CASE;
-            if ready_to_receive_packet(self) then
-                load_transmit_register(self, x"dc");
+            if ready_to_receive_packet(self) and packet_counter < 1  then
+                transmit_byte(self, test_frame(1));
+                packet_counter <= packet_counter + 1;
             end if;
 
         end if; -- rising_edge
@@ -79,7 +86,7 @@ begin
     catch_spi : process(self.spi_clock)
         
     begin
-        if falling_edge(self.spi_clock) then
+        if rising_edge(self.spi_clock) then
             capture_buffer <= capture_buffer(14 downto 0) & self.spi_data_from_master;
         end if; --rising_edge
     end process catch_spi;	
