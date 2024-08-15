@@ -1,3 +1,6 @@
 [submodule "source/vhdl_serial"]
 	path = source/vhdl_serial
 	url = https://github.com/johonkanen/vhdl_serial.git
+[submodule "source/fpga_communication"]
+	path = source/fpga_communication
+	url = https://github.com/johonkanen/fpga_communication.git

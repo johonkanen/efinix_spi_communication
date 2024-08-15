@@ -18,7 +18,6 @@ architecture vunit_simulation of spi_communication_tb is
     package spi_transmitter_pkg is new work.spi_transmitter_generic_pkg generic map(g_clock_divider => 5);
     use spi_transmitter_pkg.all;
 
-
     constant clock_period      : time    := 1 ns;
     constant simtime_in_clocks : integer := 5000;
     
@@ -30,12 +29,15 @@ architecture vunit_simulation of spi_communication_tb is
 
     signal user_led : std_logic_vector(3 downto 0);
 
-    signal self : spi_transmitter_record := init_spi_transmitter;
+    signal spi_transmmitter : spi_transmitter_record := init_spi_transmitter;
 
     signal capture_buffer : std_logic_vector(15 downto 0);
     signal packet_counter : natural := 0;
 
     constant test_frame : bytearray :=(0 => x"ac", 1=> x"dc");
+
+    signal receive_buffer : std_logic_vector(7 downto 0) := (others => '0');
+
 
 begin
 
@@ -54,20 +56,40 @@ begin
 
     stimulus : process(simulator_clock)
 
+    ------------------------------------------------
+        procedure create_spi_master 
+        (
+            signal spi_transmmitter : inout spi_transmitter_record
+        )
+        is
+        begin
+            create_spi_transmitter(spi_transmmitter, spi_data_out);
+            if ready_to_receive_packet(spi_transmmitter) and packet_counter < test_frame'high  then
+                transmit_byte(spi_transmmitter, test_frame(1));
+                packet_counter <= packet_counter + 1;
+            end if;
+            
+        end create_spi_master;
+    ------------------------------------------------
     begin
         if rising_edge(simulator_clock) then
             simulation_counter <= simulation_counter + 1;
 
-            create_spi_transmitter(self, spi_data_out);
-
             CASE simulation_counter is
                 WHEN 50 => 
-                    transmit_byte(self, test_frame(0));
+                    transmit_byte(spi_transmmitter, test_frame(0));
                 WHEN others => --do nothing
             end CASE;
-            if ready_to_receive_packet(self) and packet_counter < 1  then
-                transmit_byte(self, test_frame(1));
-                packet_counter <= packet_counter + 1;
+
+            create_spi_master(spi_transmmitter);
+
+            if simulation_counter = 332 then
+                transmit_byte(spi_transmmitter, x"11");
+            end if;
+
+            if simulation_counter = 456 then
+                transmit_byte(spi_transmmitter, test_frame(0));
+                packet_counter <= 0;
             end if;
 
         end if; -- rising_edge
@@ -76,18 +98,18 @@ begin
     dut_top : entity work.top
     port map(
         main_clock   => simulator_clock           ,
-        spi_data_in  => self.spi_data_from_master ,
-        spi_clock    => self.spi_clock            ,
-        spi_cs_in    => self.spi_cs_in            ,
+        spi_data_in  => spi_transmmitter.spi_data_from_master ,
+        spi_clock    => spi_transmmitter.spi_clock            ,
+        spi_cs_in    => spi_transmmitter.spi_cs_in            ,
         spi_data_out => spi_data_out              ,
         user_led     => user_led
     );
 ------------------------------------------------------------------------
-    catch_spi : process(self.spi_clock)
-        
+    catch_spi : process(spi_transmmitter.spi_clock)
     begin
-        if rising_edge(self.spi_clock) then
-            capture_buffer <= capture_buffer(14 downto 0) & self.spi_data_from_master;
+        if rising_edge(spi_transmmitter.spi_clock) then
+            capture_buffer <= capture_buffer(14 downto 0) & spi_transmmitter.spi_data_from_master;
         end if; --rising_edge
     end process catch_spi;	
+------------------------------------------------------------------------
 end vunit_simulation;
