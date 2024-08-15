@@ -4,6 +4,7 @@ library ieee;
 
     use work.spi_communication_pkg.all;
     use work.fpga_interconnect_pkg.all;
+    use work.bit_operations_pkg.all;
 
 entity top is
     port (
@@ -49,8 +50,9 @@ begin
             end if;
 
             create_spi_receiver(self, spi_cs_in, spi_clock, spi_data_out, std_logic_vector(testidata));
+
             if rising_edge_detected(self.spi_clock_buffer) then
-                self.input_data_buffer  <= self.input_data_buffer(self.input_data_buffer'left-1 downto 0) & spi_data_in ;
+                left_shift(self.input_data_buffer, spi_data_in);
             end if;
 
             if rising_edge_detected(self.cs_buffer) then
@@ -63,11 +65,11 @@ begin
                 end CASE;
             end if;
 
+
         end if; --rising_edge
     end process main;
 ------------------------------------------
     test : process(main_clock)
-        
     begin
         if rising_edge(main_clock) then
             bus_to_main <= bus_from_test;
@@ -81,6 +83,5 @@ begin
             connect_data_to_address(bus_from_main, bus_from_test, 10, test_register);
         end if; --rising_edge
     end process test_interconnect;	
-
 ------------------------------------------
 end rtl;

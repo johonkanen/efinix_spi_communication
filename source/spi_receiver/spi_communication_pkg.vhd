@@ -37,6 +37,9 @@ package spi_communication_pkg is
    function get_first_bit ( input : std_logic_vector)
        return std_logic;
 -------------------------------------------
+   function byte_received ( self : spi_receiver_record)
+       return boolean;
+-------------------------------------------
 
 end package spi_communication_pkg;
 
@@ -72,7 +75,7 @@ package body spi_communication_pkg is
                 self.received_byte <= self.output_data_buffer(6 downto 0) & '0';
             end if;
             self.output_data_buffer <= self.output_data_buffer(self.output_data_buffer'left-1 downto 0) & '0';
-            spi_data_out       <= self.output_data_buffer(self.output_data_buffer'left);
+            spi_data_out       <= get_first_bit(self.output_data_buffer);
         end if;
         
     end create_spi_receiver;
@@ -111,6 +114,15 @@ package body spi_communication_pkg is
        
    end get_first_bit;
 -------------------------------------------
+   function byte_received
+   (
+       self : spi_receiver_record
+   )
+   return boolean
+   is
+   begin
+       return self.byte_is_ready;
+   end byte_received;
+-------------------------------------------
 
 end package body spi_communication_pkg;
-

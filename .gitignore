@@ -12,3 +12,4 @@ xvlog.*
 *.json
 *.bak
 vunit_out/
+*.fst*
