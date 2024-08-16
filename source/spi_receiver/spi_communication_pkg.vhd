@@ -40,6 +40,9 @@ package spi_communication_pkg is
    function byte_received ( self : spi_receiver_record)
        return boolean;
 -------------------------------------------
+   function get_received_byte ( self : spi_receiver_record)
+       return std_logic_vector;
+-------------------------------------------
 
 end package spi_communication_pkg;
 
@@ -123,6 +126,16 @@ package body spi_communication_pkg is
    begin
        return self.byte_is_ready;
    end byte_received;
+-------------------------------------------
+   function get_received_byte
+   (
+       self : spi_receiver_record
+   )
+   return std_logic_vector
+   is
+   begin
+       return self.received_byte;
+   end get_received_byte;
 -------------------------------------------
 
 end package body spi_communication_pkg;

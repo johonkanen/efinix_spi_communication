@@ -1,5 +1,33 @@
 library ieee;
     use ieee.std_logic_1164.all;
+
+package spi_secondary_pkg is
+
+    /* type spi_seo */
+
+end spi_secondary_pkg;
+
+library ieee;
+    use ieee.std_logic_1164.all;
+
+entity spi_secondary is
+    port (
+        main_clock      : in std_logic;
+        spi_data_in     : in std_logic;
+        spi_clock       : in std_logic;
+        spi_cs_in       : in std_logic;
+        spi_data_out    : out std_logic;
+    );
+end entity spi_secondary;
+
+architecture rtl of spi_secondary is
+
+begin
+
+end rtl;
+--------------------------------------------------
+library ieee;
+    use ieee.std_logic_1164.all;
     use ieee.numeric_std.all;
 
     use work.spi_communication_pkg.all;
@@ -64,7 +92,6 @@ begin
                         ledstate <= (others => '0');
                 end CASE;
             end if;
-
 
         end if; --rising_edge
     end process main;
