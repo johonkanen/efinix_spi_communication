@@ -3,12 +3,28 @@ library ieee;
 
 package spi_secondary_pkg is
 
-    /* type spi_seo */
+    type spi_fpga_input_record is record
+        data : std_logic;
+    end record;
+
+    type spi_fpga_output_record is record
+        data : std_logic;
+    end record;
+
+    type spi_input_record is record
+        data : std_logic;
+    end record;
+
+    type spi_output_record is record
+        data : std_logic;
+    end record;
 
 end spi_secondary_pkg;
 
 library ieee;
     use ieee.std_logic_1164.all;
+
+    use work.spi_secondary_pkg.all;
 
 entity spi_secondary is
     port (
@@ -16,13 +32,23 @@ entity spi_secondary is
         spi_data_in     : in std_logic;
         spi_clock       : in std_logic;
         spi_cs_in       : in std_logic;
-        spi_data_out    : out std_logic;
+        spi_data_out    : out std_logic
     );
 end entity spi_secondary;
 
 architecture rtl of spi_secondary is
 
+    use work.spi_communication_pkg.all;
+    use work.bit_operations_pkg.all;
+
 begin
+
+    spi_receiver : process(main_clock)
+        
+    begin
+        if rising_edge(main_clock) then
+        end if; --rising_edge
+    end process spi_receiver;	
 
 end rtl;
 --------------------------------------------------
@@ -30,8 +56,8 @@ library ieee;
     use ieee.std_logic_1164.all;
     use ieee.numeric_std.all;
 
-    use work.spi_communication_pkg.all;
     use work.fpga_interconnect_pkg.all;
+    use work.spi_communication_pkg.all;
     use work.bit_operations_pkg.all;
 
 entity top is
