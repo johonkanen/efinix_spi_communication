@@ -10,7 +10,7 @@ spi = SpiController()
 spi.configure('ftdi://ftdi:2232:0:2/1')
 
 # Get an SPI port, configure the clock frequency, and other settings
-slave = spi.get_port(cs=0, freq=1E6, mode=0)  # cs=0 is Chip Select 0, freq=10 MHz, mode=0 (CPOL=0, CPHA=0)
+slave = spi.get_port(cs=0, freq=8E6, mode=0)  # cs=0 is Chip Select 0, freq=10 MHz, mode=0 (CPOL=0, CPHA=0)
 
 # Write data to the SPI device
 

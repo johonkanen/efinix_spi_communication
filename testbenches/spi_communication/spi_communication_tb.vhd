@@ -34,8 +34,8 @@ architecture vunit_simulation of spi_communication_tb is
     signal capture_buffer : std_logic_vector(15 downto 0);
     signal packet_counter : natural := 0;
 
-    /* constant test_frame : bytearray :=(x"04", x"00", x"01", x"ac", x"dc"); */
-    constant test_frame : bytearray :=(x"02", x"00", x"01", x"ac", x"dc",x"dc", x"dc", x"dc");
+    constant test_frame : bytearray :=(x"04", x"00", x"01", x"ac", x"dc");
+    /* constant test_frame : bytearray :=(x"02", x"00", x"01", x"ac", x"dc",x"dc", x"dc", x"dc"); */
 
 begin
 
