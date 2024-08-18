@@ -130,7 +130,7 @@ architecture rtl of spi_secondary is
     use work.spi_communication_pkg.all;
     use work.bit_operations_pkg.all;
 
-    signal test_register : std_logic_vector(15 downto 0) := x"acdc";
+    signal test_register : std_logic_vector(15 downto 0) := x"0000";
     signal testidata : unsigned(15 downto 0) := (15 => '1', 9 => '1', 8 => '1', others => '1');
     signal self : spi_receiver_record := init_spi_receiver;
 
@@ -138,12 +138,17 @@ begin
 
     spi_rx_out <= (received_byte_is_ready => byte_received(self),
                    received_byte          => get_received_byte(self));
+    spi_tx_out <= (byte_is_transmitted => byte_transmit_is_ready(self));
 
     spi_receiver : process(main_clock)
         
     begin
         if rising_edge(main_clock) then
             create_spi_receiver(self , spi_fpga_in.spi_cs_in , spi_fpga_in.spi_clock , spi_fpga_in.spi_data_in , spi_fpga_out.spi_data_out , std_logic_vector(testidata));
+            if spi_tx_in.data_send_is_requested then
+                load_byte_to_transmit_buffer(self, spi_tx_in.data_to_be_sent_through_spi);
+            end if;
+
         end if; --rising_edge
     end process spi_receiver;	
 

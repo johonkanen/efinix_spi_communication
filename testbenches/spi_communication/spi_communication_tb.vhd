@@ -34,10 +34,8 @@ architecture vunit_simulation of spi_communication_tb is
     signal capture_buffer : std_logic_vector(15 downto 0);
     signal packet_counter : natural := 0;
 
-    constant test_frame : bytearray :=(x"04", x"00", x"01", x"ac", x"dc");
-
-    signal receive_buffer : std_logic_vector(7 downto 0) := (others => '0');
-
+    /* constant test_frame : bytearray :=(x"04", x"00", x"01", x"ac", x"dc"); */
+    constant test_frame : bytearray :=(x"02", x"00", x"01", x"ac", x"dc",x"dc", x"dc", x"dc");
 
 begin
 
@@ -97,7 +95,7 @@ begin
     catch_spi : process(spi_transmmitter.spi_clock)
     begin
         if rising_edge(spi_transmmitter.spi_clock) then
-            capture_buffer <= capture_buffer(14 downto 0) & spi_transmmitter.spi_data_from_master;
+            capture_buffer <= capture_buffer(14 downto 0) & spi_data_out;
         end if; --rising_edge
     end process catch_spi;	
 ------------------------------------------------------------------------
