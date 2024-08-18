@@ -34,7 +34,7 @@ architecture vunit_simulation of spi_communication_tb is
     signal capture_buffer : std_logic_vector(15 downto 0);
     signal packet_counter : natural := 0;
 
-    constant test_frame : bytearray :=(0 => x"ac", 1=> x"dc");
+    constant test_frame : bytearray :=(x"04", x"00", x"01", x"ac", x"dc");
 
     signal receive_buffer : std_logic_vector(7 downto 0) := (others => '0');
 
@@ -64,8 +64,8 @@ begin
         is
         begin
             create_spi_transmitter(spi_transmmitter, spi_data_out);
-            if ready_to_receive_packet(spi_transmmitter) and packet_counter < test_frame'high  then
-                transmit_byte(spi_transmmitter, test_frame(1));
+            if ready_to_receive_packet(spi_transmmitter) and packet_counter <= test_frame'high  then
+                transmit_byte(spi_transmmitter, test_frame(packet_counter));
                 packet_counter <= packet_counter + 1;
             end if;
             
@@ -83,14 +83,14 @@ begin
 
             create_spi_master(spi_transmmitter);
 
-            if simulation_counter = 332 then
-                transmit_byte(spi_transmmitter, x"11");
-            end if;
+            /* if simulation_counter = 332 then */
+            /*     transmit_byte(spi_transmmitter, x"11"); */
+            /* end if; */
 
-            if simulation_counter = 456 then
-                transmit_byte(spi_transmmitter, test_frame(0));
-                packet_counter <= 0;
-            end if;
+            /* if simulation_counter = 456 then */
+            /*     transmit_byte(spi_transmmitter, test_frame(0)); */
+                /* packet_counter <= 0; */
+            /* end if; */
 
         end if; -- rising_edge
     end process stimulus;	

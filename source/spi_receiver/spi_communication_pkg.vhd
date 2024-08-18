@@ -73,20 +73,19 @@ package body spi_communication_pkg is
 
         self.byte_is_ready <=false;
         if falling_edge_detected(self.spi_clock_buffer) then
-            if self.transmitted_data_index < 8 then
-                self.transmitted_data_index <= self.transmitted_data_index + 1;
-            else
-                self.transmitted_data_index <= 0;
-                self.received_byte_index <= self.received_byte_index + 1;
-                self.byte_is_ready <=true;
-                self.received_byte <= self.output_data_buffer(6 downto 0) & '0';
-            end if;
             self.output_data_buffer <= self.output_data_buffer(self.output_data_buffer'left-1 downto 0) & '0';
             spi_data_out       <= get_first_bit(self.output_data_buffer);
         end if;
 
         if rising_edge_detected(self.spi_clock_buffer) then
             left_shift(self.input_data_buffer, spi_data_in);
+            if self.received_byte_index < 7 then
+                self.received_byte_index <= self.received_byte_index + 1;
+            else
+                self.received_byte_index <= 0;
+                self.byte_is_ready <=true;
+                self.received_byte <= self.input_data_buffer(6 downto 0) & '0';
+            end if;
         end if;
         
     end create_spi_receiver;

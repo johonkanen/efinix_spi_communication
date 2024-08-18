@@ -20,16 +20,11 @@ entity top is
     );
 end entity top;
 
-
 architecture rtl of top is
 
     signal ledstate : std_logic_vector(3 downto 0) := "1111";
-    constant testi  : std_logic_vector(15 downto 0) := x"acdc";
 
     signal testidata : unsigned(15 downto 0) := (15 => '1', 9 => '1', 8 => '1', others => '1');
-
-    type std15array is array (integer range 0 to 4) of std_logic_vector(15 downto 0);
-    constant output_data : std15array :=(x"acdc", x"aaaa", x"5555", x"ffff", x"1234");
 
     signal self : spi_receiver_record := init_spi_receiver;
     signal bus_from_main : fpga_interconnect_record := init_fpga_interconnect;
@@ -55,12 +50,11 @@ begin
         if rising_edge(main_clock) then
             init_bus(bus_from_main);
             create_serial_protocol(spi_protocol, spi_rx_out, spi_tx_in, spi_tx_out);
+            create_spi_receiver(self, spi_cs_in, spi_clock, spi_data_in, spi_data_out, std_logic_vector(testidata));
 
             if falling_edge_detected(self.cs_buffer) then
                 testidata <= testidata + 3;
             end if;
-
-            create_spi_receiver(self, spi_cs_in, spi_clock, spi_data_in, spi_data_out, std_logic_vector(testidata));
 
             if rising_edge_detected(self.cs_buffer) then
                 CASE self.input_data_buffer is

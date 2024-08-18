@@ -136,6 +136,9 @@ architecture rtl of spi_secondary is
 
 begin
 
+    spi_rx_out <= (received_byte_is_ready => byte_received(self),
+                   received_byte          => get_received_byte(self));
+
     spi_receiver : process(main_clock)
         
     begin
