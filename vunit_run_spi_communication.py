@@ -20,7 +20,7 @@ lib.add_source_files(ROOT / "source/fpga_communication/serial_protocol_generic_p
 lib.add_source_files(ROOT / "source/fpga_interconnect_pkg.vhd")
 lib.add_source_files(ROOT / "source/spi_receiver/spi_communication_pkg.vhd")
 
-lib.add_source_files(ROOT / "testbenches/spi_communication/spi_communication_protocol_pkg.vhd")
+lib.add_source_files(ROOT / "source/spi_communication_protocol_pkg.vhd")
 
 lib.add_source_files(ROOT / "testbenches/spi_communication/spi_communication_tb.vhd")
 VU.set_sim_option("nvc.sim_flags", ["-w"])

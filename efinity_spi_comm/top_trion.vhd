@@ -118,7 +118,10 @@ entity spi_secondary is
     port (
         main_clock   : in std_logic;
         spi_fpga_in  : in spi_fpga_input_record;
-        spi_fpga_out : out spi_fpga_output_record
+        spi_fpga_out : out spi_fpga_output_record;
+        spi_rx_out   : out spi_rx_out_record;
+        spi_tx_in    : in spi_tx_in_record;
+        spi_tx_out   : out spi_tx_out_record
     );
 end entity spi_secondary;
 
@@ -183,6 +186,10 @@ architecture rtl of top is
     signal test_register : std_logic_vector(15 downto 0) := x"acdc";
     signal dummy_spi_data_out : std_logic;
 
+    signal spi_rx_out : spi_rx_out_record;
+    signal spi_tx_in  : spi_tx_in_record;
+    signal spi_tx_out : spi_tx_out_record;
+
 begin
 
     user_led <= ledstate;
@@ -229,10 +236,14 @@ begin
 ------------------------------------------
     u_spi_secondary : entity work.spi_secondary
     port map(
-        main_clock                               ,
-        spi_fpga_in.spi_data_in   => spi_data_in ,
-        spi_fpga_in.spi_clock     => spi_clock   ,
-        spi_fpga_in.spi_cs_in     => spi_cs_in   ,
-        spi_fpga_out.spi_data_out => dummy_spi_data_out);
+        main_clock                                      ,
+        spi_fpga_in.spi_data_in   => spi_data_in        ,
+        spi_fpga_in.spi_clock     => spi_clock          ,
+        spi_fpga_in.spi_cs_in     => spi_cs_in          ,
+        spi_fpga_out.spi_data_out => dummy_spi_data_out ,
+        spi_rx_out                => spi_rx_out         ,
+        spi_tx_in                 => spi_tx_in          ,
+        spi_tx_out                => spi_tx_out
+    );
 ------------------------------------------
 end rtl;
