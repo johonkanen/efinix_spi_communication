@@ -13,16 +13,65 @@ package spi_secondary_pkg is
         spi_data_out : std_logic;
     end record;
 
-    type spi_input_record is record
-        data : std_logic;
+    type spi_tx_in_record is record
+        data_send_is_requested      : boolean;
+        data_to_be_sent_through_spi : std_logic_vector(7 downto 0);
     end record;
 
-    type spi_output_record is record
+    type spi_tx_out_record is record
+        byte_is_transmitted : boolean;
+    end record;
+
+    type spi_rx_out_record is record
+        received_byte_is_ready : boolean;
         received_byte : std_logic_vector(7 downto 0);
-        byte_is_ready_when_1 : boolean;
     end record;
 
 end package spi_secondary_pkg;
+
+package body spi_secondary_pkg is
+
+    function spi_rx_data_is_ready
+    (
+        self_rx_out : spi_rx_out_record
+    )
+    return boolean
+    is
+    begin
+        return self_rx_out.received_byte_is_ready;
+    end spi_rx_data_is_ready;
+
+    function get_spi_rx_data
+    (
+        self_rx_out : spi_rx_out_record
+    )
+    return std_logic_vector 
+    is
+    begin
+        return self_rx_out.received_byte;
+    end get_spi_rx_data;
+
+    procedure transmit_8bit_data_package
+    (
+        signal self_tx_in : out spi_tx_in_record;
+        data_to_be_sent_through_spi : in std_logic_vector(7 downto 0)
+    ) is
+    begin
+        
+        self_tx_in.data_send_is_requested      <= true;
+        self_tx_in.data_to_be_sent_through_spi <= data_to_be_sent_through_spi;
+    end transmit_8bit_data_package;
+
+    procedure init_spi
+    (
+        signal self_tx_in : out spi_tx_in_record
+    ) is
+    begin
+        self_tx_in.data_send_is_requested      <= false;
+        self_tx_in.data_to_be_sent_through_spi <= (others => '0');
+    end init_spi;
+
+end package body spi_secondary_pkg;
 
 library ieee;
     use ieee.std_logic_1164.all;
