@@ -22,7 +22,7 @@ end entity top;
 
 architecture rtl of top is
 
-    signal ledstate : std_logic_vector(3 downto 0) := "1111";
+    signal ledstate : std_logic_vector(3 downto 0) := "0000";
 
     signal testidata : unsigned(15 downto 0) := (15 => '1', 9 => '1', 8 => '1', others => '1');
 
@@ -31,7 +31,7 @@ architecture rtl of top is
     signal bus_from_test : fpga_interconnect_record := init_fpga_interconnect;
 
     signal bus_to_main : fpga_interconnect_record := init_fpga_interconnect;
-    signal test_register : std_logic_vector(15 downto 0) := x"acdc";
+    signal test_register : std_logic_vector(15 downto 0) := x"0000";
     signal dummy_spi_data_out : std_logic;
 
     signal spi_rx_out : spi_rx_out_record;
@@ -50,20 +50,13 @@ begin
         if rising_edge(main_clock) then
             init_bus(bus_from_main);
             create_serial_protocol(spi_protocol, spi_rx_out, spi_tx_in, spi_tx_out);
-            create_spi_receiver(self, spi_cs_in, spi_clock, spi_data_in, spi_data_out, std_logic_vector(testidata));
 
-            if falling_edge_detected(self.cs_buffer) then
-                testidata <= testidata + 3;
-            end if;
-
-            if rising_edge_detected(self.cs_buffer) then
-                CASE self.input_data_buffer is
-                    WHEN x"acdc" =>
-                        ledstate <= (others => '1');
-                        request_data_from_address(bus_from_main, 10);
-                    WHEN others =>
-                        ledstate <= (others => '0');
-                end CASE;
+            if frame_has_been_received(spi_protocol) then
+                /* CASE get_command(spi_protocol) is */
+                /*     WHEN write_to_address_is_requested_from_uart => */
+                        write_data_to_address(bus_from_main, get_command_address(spi_protocol), get_command_data(spi_protocol));
+                    /* WHEN others => --do nothing */
+                /* end CASE; */
             end if;
 
         end if; --rising_edge
@@ -80,7 +73,10 @@ begin
     begin
         if rising_edge(main_clock) then
             init_bus(bus_from_test);
-            connect_data_to_address(bus_from_main, bus_from_test, 10, test_register);
+            connect_data_to_address(bus_from_main, bus_from_test, 1, test_register);
+            if test_register = x"acdc" then
+                ledstate <= "1111";
+            end if;
         end if; --rising_edge
     end process test_interconnect;	
 ------------------------------------------

@@ -64,8 +64,8 @@ begin
         is
         begin
             create_spi_transmitter(spi_transmmitter, spi_data_out);
-            if ready_to_receive_packet(spi_transmmitter) and packet_counter <= test_frame'high  then
-                transmit_byte(spi_transmmitter, test_frame(packet_counter));
+            if ready_to_receive_packet(spi_transmmitter) and packet_counter < test_frame'high  then
+                transmit_byte(spi_transmmitter, test_frame(packet_counter+1));
                 packet_counter <= packet_counter + 1;
             end if;
             
@@ -74,24 +74,13 @@ begin
     begin
         if rising_edge(simulator_clock) then
             simulation_counter <= simulation_counter + 1;
+            create_spi_master(spi_transmmitter);
 
             CASE simulation_counter is
                 WHEN 50 => 
                     transmit_byte(spi_transmmitter, test_frame(0));
                 WHEN others => --do nothing
             end CASE;
-
-            create_spi_master(spi_transmmitter);
-
-            /* if simulation_counter = 332 then */
-            /*     transmit_byte(spi_transmmitter, x"11"); */
-            /* end if; */
-
-            /* if simulation_counter = 456 then */
-            /*     transmit_byte(spi_transmmitter, test_frame(0)); */
-                /* packet_counter <= 0; */
-            /* end if; */
-
         end if; -- rising_edge
     end process stimulus;	
 ------------------------------------------------------------------------
