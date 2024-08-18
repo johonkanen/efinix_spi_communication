@@ -23,6 +23,6 @@ def send(data_to_send):
     print("Response from SPI device (Integers):", int_response)
     print("Response from SPI device:", hex_response)
 
-leds_on = [0x00, 0x00, 0xac, 0xdc]  # Replace with the data you want to send
-leds_off = [0x00, 0x00]  # Replace with the data you want to send
+leds_on = [0x04, 0x00, 0x01, 0xac, 0xdc]  # Replace with the data you want to send
+leds_off = [0x04, 0x00, 0x01, 0x00, 0x00]  # Replace with the data you want to send
 send(leds_on)

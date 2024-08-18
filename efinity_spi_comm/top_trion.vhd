@@ -52,11 +52,11 @@ begin
             create_serial_protocol(spi_protocol, spi_rx_out, spi_tx_in, spi_tx_out);
 
             if frame_has_been_received(spi_protocol) then
-                /* CASE get_command(spi_protocol) is */
-                /*     WHEN write_to_address_is_requested_from_uart => */
+                CASE get_command(spi_protocol) is
+                    WHEN write_to_address_is_requested_from_uart =>
                         write_data_to_address(bus_from_main, get_command_address(spi_protocol), get_command_data(spi_protocol));
-                    /* WHEN others => --do nothing */
-                /* end CASE; */
+                    WHEN others => --do nothing
+                end CASE;
             end if;
 
         end if; --rising_edge
@@ -76,6 +76,8 @@ begin
             connect_data_to_address(bus_from_main, bus_from_test, 1, test_register);
             if test_register = x"acdc" then
                 ledstate <= "1111";
+            else
+                ledstate <= test_register(3 downto 0);
             end if;
         end if; --rising_edge
     end process test_interconnect;	
