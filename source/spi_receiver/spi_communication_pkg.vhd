@@ -2,6 +2,8 @@ library ieee;
     use ieee.std_logic_1164.all;
     use ieee.numeric_std.all;
 
+    use work.bit_operations_pkg.left_shift;
+
 package spi_communication_pkg is
 
     type spi_receiver_record is record
@@ -24,6 +26,7 @@ package spi_communication_pkg is
         signal self         : inout spi_receiver_record;
         spi_cs              : in std_logic;
         spi_clock           : in std_logic;
+        spi_data_in         : in std_logic;
         signal spi_data_out : out std_logic;
         frame_out_of_spi    : in std_logic_vector(15 downto 0));
 
@@ -50,11 +53,12 @@ package body spi_communication_pkg is
 
     procedure create_spi_receiver
     (
-        signal self : inout spi_receiver_record;
-        spi_cs : in std_logic;
-        spi_clock : in std_logic;
+        signal self         : inout spi_receiver_record;
+        spi_cs              : in std_logic;
+        spi_clock           : in std_logic;
+        spi_data_in         : in std_logic;
         signal spi_data_out : out std_logic;
-        frame_out_of_spi : in std_logic_vector(15 downto 0)
+        frame_out_of_spi    : in std_logic_vector(15 downto 0)
     ) is
     begin
         self.spi_clock_buffer <= self.spi_clock_buffer(self.spi_clock_buffer'left-1 downto 0) & spi_clock;
@@ -79,6 +83,10 @@ package body spi_communication_pkg is
             end if;
             self.output_data_buffer <= self.output_data_buffer(self.output_data_buffer'left-1 downto 0) & '0';
             spi_data_out       <= get_first_bit(self.output_data_buffer);
+        end if;
+
+        if rising_edge_detected(self.spi_clock_buffer) then
+            left_shift(self.input_data_buffer, spi_data_in);
         end if;
         
     end create_spi_receiver;

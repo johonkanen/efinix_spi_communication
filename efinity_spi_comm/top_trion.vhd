@@ -4,11 +4,13 @@ library ieee;
 package spi_secondary_pkg is
 
     type spi_fpga_input_record is record
-        data : std_logic;
+        spi_data_in     : std_logic;
+        spi_clock       : std_logic;
+        spi_cs_in       : std_logic;
     end record;
 
     type spi_fpga_output_record is record
-        data : std_logic;
+        spi_data_out : std_logic;
     end record;
 
     type spi_input_record is record
@@ -16,23 +18,23 @@ package spi_secondary_pkg is
     end record;
 
     type spi_output_record is record
-        data : std_logic;
+        received_byte : std_logic_vector(7 downto 0);
+        byte_is_ready_when_1 : boolean;
     end record;
 
-end spi_secondary_pkg;
+end package spi_secondary_pkg;
 
 library ieee;
     use ieee.std_logic_1164.all;
+    use ieee.numeric_std.all;
 
     use work.spi_secondary_pkg.all;
 
 entity spi_secondary is
     port (
-        main_clock      : in std_logic;
-        spi_data_in     : in std_logic;
-        spi_clock       : in std_logic;
-        spi_cs_in       : in std_logic;
-        spi_data_out    : out std_logic
+        main_clock   : in std_logic;
+        spi_fpga_in  : in spi_fpga_input_record;
+        spi_fpga_out : out spi_fpga_output_record
     );
 end entity spi_secondary;
 
@@ -41,12 +43,17 @@ architecture rtl of spi_secondary is
     use work.spi_communication_pkg.all;
     use work.bit_operations_pkg.all;
 
+    signal test_register : std_logic_vector(15 downto 0) := x"acdc";
+    signal testidata : unsigned(15 downto 0) := (15 => '1', 9 => '1', 8 => '1', others => '1');
+    signal self : spi_receiver_record := init_spi_receiver;
+
 begin
 
     spi_receiver : process(main_clock)
         
     begin
         if rising_edge(main_clock) then
+            create_spi_receiver(self , spi_fpga_in  .spi_cs_in , spi_fpga_in.spi_clock , spi_fpga_in.spi_data_in , spi_fpga_out.spi_data_out , std_logic_vector(testidata));
         end if; --rising_edge
     end process spi_receiver;	
 
@@ -59,6 +66,8 @@ library ieee;
     use work.fpga_interconnect_pkg.all;
     use work.spi_communication_pkg.all;
     use work.bit_operations_pkg.all;
+
+    use work.spi_secondary_pkg.all;
 
 entity top is
     port (
@@ -88,6 +97,7 @@ architecture rtl of top is
 
     signal bus_to_main : fpga_interconnect_record := init_fpga_interconnect;
     signal test_register : std_logic_vector(15 downto 0) := x"acdc";
+    signal dummy_spi_data_out : std_logic;
 
 begin
 
@@ -103,11 +113,7 @@ begin
                 testidata <= testidata + 3;
             end if;
 
-            create_spi_receiver(self, spi_cs_in, spi_clock, spi_data_out, std_logic_vector(testidata));
-
-            if rising_edge_detected(self.spi_clock_buffer) then
-                left_shift(self.input_data_buffer, spi_data_in);
-            end if;
+            create_spi_receiver(self, spi_cs_in, spi_clock, spi_data_in, spi_data_out, std_logic_vector(testidata));
 
             if rising_edge_detected(self.cs_buffer) then
                 CASE self.input_data_buffer is
@@ -136,5 +142,13 @@ begin
             connect_data_to_address(bus_from_main, bus_from_test, 10, test_register);
         end if; --rising_edge
     end process test_interconnect;	
+------------------------------------------
+    u_spi_secondary : entity work.spi_secondary
+    port map(
+        main_clock                               ,
+        spi_fpga_in.spi_data_in   => spi_data_in ,
+        spi_fpga_in.spi_clock     => spi_clock   ,
+        spi_fpga_in.spi_cs_in     => spi_cs_in   ,
+        spi_fpga_out.spi_data_out => dummy_spi_data_out);
 ------------------------------------------
 end rtl;
