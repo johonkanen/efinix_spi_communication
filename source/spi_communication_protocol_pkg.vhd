@@ -1,6 +1,6 @@
 use work.spi_secondary_pkg.all;
 
-package uart_protocol_pkg is new work.serial_protocol_generic_pkg
+package spi_protocol_pkg is new work.serial_protocol_generic_pkg
     generic map(serial_rx_data_output_record => spi_rx_out_record,
                 serial_tx_data_input_record  => spi_tx_in_record,
                 serial_tx_data_output_record => spi_tx_out_record,
