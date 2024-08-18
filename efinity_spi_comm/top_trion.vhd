@@ -24,15 +24,11 @@ architecture rtl of top is
 
     signal ledstate : std_logic_vector(3 downto 0) := "0000";
 
-    signal testidata : unsigned(15 downto 0) := (15 => '1', 9 => '1', 8 => '1', others => '1');
-
-    signal self : spi_receiver_record := init_spi_receiver;
     signal bus_from_main : fpga_interconnect_record := init_fpga_interconnect;
     signal bus_from_test : fpga_interconnect_record := init_fpga_interconnect;
 
     signal bus_to_main : fpga_interconnect_record := init_fpga_interconnect;
     signal test_register : std_logic_vector(15 downto 0) := x"abcd";
-    signal dummy_spi_data_out : std_logic;
 
     signal spi_rx_out : spi_rx_out_record;
     signal spi_tx_in  : spi_tx_in_record;
@@ -40,7 +36,6 @@ architecture rtl of top is
 
     signal spi_protocol : serial_communcation_record := init_serial_communcation;
 
-    signal data_read_requested : boolean;
     signal transmit_buffer : std_logic_vector(15 downto 0);
 
 begin
@@ -58,18 +53,15 @@ begin
                 CASE get_command(spi_protocol) is
                     WHEN read_is_requested_from_address_from_uart =>
                         request_data_from_address(bus_from_main, get_command_address(spi_protocol));
-                        data_read_requested <= true;
                     WHEN write_to_address_is_requested_from_uart =>
                         write_data_to_address(bus_from_main, get_command_address(spi_protocol), get_command_data(spi_protocol));
                     WHEN others => --do nothing
                 end CASE;
             end if;
 
-            if data_read_requested then
-                if write_to_address_is_requested(bus_to_main, 0) then
-                    transmit_words_with_uart(spi_protocol, (bus_to_main.data(15 downto 8), bus_to_main.data(7 downto 0)));
-                    transmit_buffer <= bus_to_main.data;
-                end if;
+            if write_to_address_is_requested(bus_to_main, 0) then
+                transmit_words_with_uart(spi_protocol, (bus_to_main.data(15 downto 8), bus_to_main.data(7 downto 0)));
+                transmit_buffer <= bus_to_main.data;
             end if;
 
         end if; --rising_edge
@@ -97,13 +89,13 @@ begin
 ------------------------------------------
     u_spi_secondary : entity work.spi_secondary
     port map(
-        main_clock                                      ,
-        spi_fpga_in.spi_data_in   => spi_data_in        ,
-        spi_fpga_in.spi_clock     => spi_clock          ,
-        spi_fpga_in.spi_cs_in     => spi_cs_in          ,
+        main_clock                                ,
+        spi_fpga_in.spi_data_in   => spi_data_in  ,
+        spi_fpga_in.spi_clock     => spi_clock    ,
+        spi_fpga_in.spi_cs_in     => spi_cs_in    ,
         spi_fpga_out.spi_data_out => spi_data_out ,
-        spi_rx_out                => spi_rx_out         ,
-        spi_tx_in                 => spi_tx_in          ,
+        spi_rx_out                => spi_rx_out   ,
+        spi_tx_in                 => spi_tx_in    ,
         spi_tx_out                => spi_tx_out
     );
 ------------------------------------------
