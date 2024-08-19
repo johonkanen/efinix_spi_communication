@@ -36,6 +36,8 @@ architecture rtl of top is
     signal spi_protocol : serial_communcation_record := init_serial_communcation;
 
     signal transmit_buffer : std_logic_vector(15 downto 0);
+    signal number_of_registers_to_stream : natural range 0 to 2**23-1 := 0;
+    signal stream_address : natural range 0 to 2**16-1;
 
 begin
 
@@ -54,8 +56,19 @@ begin
                         request_data_from_address(bus_from_main, get_command_address(spi_protocol));
                     WHEN write_to_address_is_requested_from_uart =>
                         write_data_to_address(bus_from_main, get_command_address(spi_protocol), get_command_data(spi_protocol));
+                    WHEN stream_data_from_address =>
+                        number_of_registers_to_stream <= get_number_of_registers_to_stream(spi_protocol);
+                        stream_address                <= get_command_address(spi_protocol);
+
                     WHEN others => --do nothing
                 end CASE;
+            end if;
+
+            if number_of_registers_to_stream > 0 then
+                if transmit_is_ready(spi_protocol) then
+                    number_of_registers_to_stream <= number_of_registers_to_stream - 1;
+                    request_data_from_address(bus_from_main, stream_address);
+                end if;
             end if;
 
             if write_to_address_is_requested(bus_to_main, 0) then

@@ -7,7 +7,7 @@ print(Ftdi.list_devices())
 spi = SpiController()
 
 # Configure the FTDI device, replace 'ftdi://ftdi:2232:0:2/1' with your actual device address
-spi.configure('ftdi://ftdi:2232:0:2/1')
+spi.configure('ftdi://ftdi:2232:0:3/1')
 
 # Get an SPI port, configure the clock frequency, and other settings
 slave = spi.get_port(cs=0, freq=8E6, mode=0)  # cs=0 is Chip Select 0, freq=10 MHz, mode=0 (CPOL=0, CPHA=0)
@@ -25,5 +25,17 @@ def send(data_to_send):
 
 leds_on  = [0x04, 0x00, 0x01, 0xac, 0xdc]  # Replace with the data you want to send
 leds_off = [0x04, 0x00, 0x01, 0x00, 0x00]  # Replace with the data you want to send
+
+stream_10_data = [ 0x05, 0x00, 0x01, 0x00, 0x00, 0x0a,
+                  0x00, 0x00,
+                  0x00, 0x00,
+                  0x00, 0x00,
+                  0x00, 0x00,
+                  0x00, 0x00,
+                  0x00, 0x00,
+                  0x00, 0x00,
+                  0x00, 0x00,
+                  0x00, 0x00,
+                  0x00, 0x00]
 
 send(leds_on)
