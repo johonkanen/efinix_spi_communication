@@ -35,6 +35,10 @@ architecture rtl of top is
 
     signal spi_protocol : serial_communcation_record := init_serial_communcation;
 
+    type packet_handler_record is record
+        data : std_logic;
+    end record;
+
     signal transmit_buffer : std_logic_vector(15 downto 0);
     signal number_of_registers_to_stream : natural range 0 to 2**23-1 := 0;
     signal stream_address : natural range 0 to 2**16-1;
@@ -45,6 +49,13 @@ begin
 
 ------------------------------------------
     main : process(main_clock)
+        procedure packet_handler
+        (
+            signal self : inout packet_handler
+        ) is
+        begin
+            
+        end packet_handler;
     begin
         if rising_edge(main_clock) then
             init_bus(bus_from_main);
