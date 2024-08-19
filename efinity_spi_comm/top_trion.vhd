@@ -51,7 +51,7 @@ begin
     main : process(main_clock)
         procedure packet_handler
         (
-            signal self : inout packet_handler
+            signal self : inout packet_handler_record
         ) is
         begin
             
@@ -63,9 +63,9 @@ begin
 
             if frame_has_been_received(spi_protocol) then
                 CASE get_command(spi_protocol) is
-                    WHEN read_is_requested_from_address_from_uart =>
+                    WHEN read_is_requested_from_address_from_serial =>
                         request_data_from_address(bus_from_main, get_command_address(spi_protocol));
-                    WHEN write_to_address_is_requested_from_uart =>
+                    WHEN write_to_address_is_requested_from_serial =>
                         write_data_to_address(bus_from_main, get_command_address(spi_protocol), get_command_data(spi_protocol));
                     WHEN stream_data_from_address =>
                         number_of_registers_to_stream <= get_number_of_registers_to_stream(spi_protocol);
@@ -83,7 +83,7 @@ begin
             end if;
 
             if write_to_address_is_requested(bus_to_main, 0) then
-                transmit_words_with_uart(spi_protocol, (bus_to_main.data(15 downto 8), bus_to_main.data(7 downto 0)));
+                transmit_words_with_serial(spi_protocol, (bus_to_main.data(15 downto 8), bus_to_main.data(7 downto 0)));
                 transmit_buffer <= bus_to_main.data;
             end if;
 

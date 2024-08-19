@@ -9,7 +9,7 @@ package spi_protocol_pkg is new work.serial_protocol_generic_pkg
                 --------------------------------
                 get_serial_rx_data => get_spi_rx_data,
                 --------------------------------
-                init_uart => init_spi,
+                init_serial => init_spi,
                 --------------------------------
                 transmit_8bit_data_package => transmit_8bit_data_package,
                 --------------------------------
