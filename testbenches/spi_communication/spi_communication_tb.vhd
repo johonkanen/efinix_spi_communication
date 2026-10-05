@@ -76,6 +76,12 @@ begin
                 wait for simtime_in_clocks*clock_period;
                 check(user_led = "1111", "leds were not turned on");
 
+            elsif run("write directly after stream turns leds on") then
+                -- padding bytes of the stream frame must not shift the following command
+                set_test_frame(stream_10_words_frame & write_leds_on_frame);
+                wait for simtime_in_clocks*clock_period;
+                check(user_led = "1111", "leds were not turned on");
+
             elsif run("stream data from address") then
                 set_test_frame(stream_10_words_frame);
                 wait for simtime_in_clocks*clock_period;

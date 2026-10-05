@@ -17,7 +17,7 @@ lib.add_source_files(ROOT / "source/vhdl_serial/source/clock_divider/clock_divid
 lib.add_source_files(ROOT / "source/vhdl_serial/source/spi_master/spi_transmitter_generic_pkg.vhd")
 
 lib.add_source_files(ROOT / "source/fpga_communication/hVHDL_fpga_interconnect/fpga_interconnect_generic_pkg.vhd")
-lib.add_source_files(ROOT / "source/fpga_communication/serial_protocol_generic_pkg.vhd")
+lib.add_source_files(ROOT / "source/serial_protocol_generic_pkg.vhd")
 lib.add_source_files(ROOT / "source/fpga_interconnect_pkg.vhd")
 lib.add_source_files(ROOT / "source/spi_receiver/spi_receiver_pkg.vhd")
 

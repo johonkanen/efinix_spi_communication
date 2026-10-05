@@ -10,7 +10,7 @@
         <efx:design_file name="../source/fpga_communication/hVHDL_fpga_interconnect/fpga_interconnect_generic_pkg.vhd" version="default" library="default" />
         <efx:design_file name="../source/fpga_interconnect_pkg.vhd" version="default" library="default" />
         <efx:design_file name="../source/vhdl_serial/bit_operations_pkg.vhd" version="default" library="default" />
-        <efx:design_file name="../source/fpga_communication/serial_protocol_generic_pkg.vhd" version="default" library="default" />
+        <efx:design_file name="../source/serial_protocol_generic_pkg.vhd" version="default" library="default" />
         <efx:design_file name="../source/spi_secondary.vhd" version="default" library="default" />
         <efx:design_file name="../source/spi_communication_protocol_pkg.vhd" version="default" library="default" />
         <efx:design_file name="../source/spi_receiver/spi_receiver_pkg.vhd" version="default" library="default" />
