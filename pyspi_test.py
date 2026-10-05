@@ -6,8 +6,8 @@ print(Ftdi.list_devices())
 # Initialize the SPI controller
 spi = SpiController()
 
-# Configure the FTDI device, replace 'ftdi://ftdi:2232:0:2/1' with your actual device address
-spi.configure('ftdi://ftdi:2232:0:1/1')
+# Trion T120F324 board selected by FTDI serial number, interface 1 is SPI (interface 2 is JTAG)
+spi.configure('ftdi://ftdi:2232:FT56NF97/1')
 
 # Get an SPI port, configure the clock frequency, and other settings
 slave = spi.get_port(cs=0, freq=8E6, mode=0)  # cs=0 is Chip Select 0, freq=10 MHz, mode=0 (CPOL=0, CPHA=0)
