@@ -3,7 +3,6 @@ library ieee;
     use ieee.numeric_std.all;
 
     use work.fpga_interconnect_pkg.all;
-    use work.spi_communication_pkg.all;
 
     use work.spi_secondary_pkg.all;
     use work.spi_protocol_pkg.all;

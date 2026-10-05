@@ -127,30 +127,117 @@ end entity spi_secondary;
 
 architecture rtl of spi_secondary is
 
-    use work.spi_communication_pkg.all;
-    use work.bit_operations_pkg.all;
+    -- The shift registers run directly from spi_clock, so the spi clock rate is not
+    -- limited by oversampling with main_clock. A byte ends on the 8th rising edge,
+    -- where the received byte is stored and the next byte to transmit is loaded.
 
-    signal test_register : std_logic_vector(15 downto 0) := x"0000";
-    signal testidata : unsigned(15 downto 0) := (15 => '1', 9 => '1', 8 => '1', others => '1');
-    signal self : spi_receiver_record := init_spi_receiver;
+    function to_gray(number : natural range 0 to 3) return std_logic_vector is
+        constant binary : unsigned(1 downto 0) := to_unsigned(number, 2);
+    begin
+        return std_logic_vector(binary xor ('0' & binary(1)));
+    end to_gray;
+
+    type byte_array is array (natural range <>) of std_logic_vector(7 downto 0);
+
+    -- spi clock domain
+    signal bit_counter        : natural range 0 to 7 := 0;
+    signal rx_shift_register  : std_logic_vector(6 downto 0) := (others => '0');
+    signal rx_byte            : std_logic_vector(7 downto 0) := (others => '0');
+    signal byte_toggle        : std_logic := '0';
+    signal tx_shift_register  : std_logic_vector(7 downto 0) := (others => '1');
+    signal tx_fifo_read_index : natural range 0 to 3 := 0;
+
+    -- main clock domain
+    signal byte_toggle_sync       : std_logic_vector(2 downto 0) := (others => '0');
+    signal byte_is_done_pipeline  : std_logic_vector(2 downto 0) := (others => '0');
+    signal received_byte          : std_logic_vector(7 downto 0) := (others => '0');
+    signal tx_fifo_write_index    : natural range 0 to 3 := 0;
+
+    -- Written in main clock domain and read in spi clock domain at the end of a byte.
+    -- Writes are made a few main clocks after a byte has ended, so these are stable for
+    -- most of a byte time when they are read. The write index is gray coded.
+    signal tx_fifo            : byte_array(0 to 3) := (others => (others => '0'));
+    signal tx_fifo_write_gray : std_logic_vector(1 downto 0) := (others => '0');
 
 begin
 
-    spi_rx_out <= (received_byte_is_ready => byte_received(self),
-                   received_byte          => get_received_byte(self));
-    spi_tx_out <= (byte_is_transmitted => byte_transmit_is_ready(self));
+    spi_rx_out <= (received_byte_is_ready => byte_is_done_pipeline(0) = '1',
+                   received_byte          => received_byte);
+    -- delayed so that the protocol has handled a received frame before the transmit ready
+    spi_tx_out <= (byte_is_transmitted => byte_is_done_pipeline(2) = '1');
 
-    spi_receiver : process(main_clock)
-        
+    spi_fpga_out.spi_data_out <= tx_shift_register(tx_shift_register'left);
+
+------------------------------------------
+    bit_counting : process(spi_fpga_in.spi_clock, spi_fpga_in.spi_cs_in)
+    begin
+        if spi_fpga_in.spi_cs_in = '1' then
+            bit_counter <= 0;
+        elsif rising_edge(spi_fpga_in.spi_clock) then
+            bit_counter <= (bit_counter + 1) mod 8;
+        end if;
+    end process bit_counting;
+
+    receive : process(spi_fpga_in.spi_clock)
+    begin
+        if rising_edge(spi_fpga_in.spi_clock) then
+            rx_shift_register <= rx_shift_register(rx_shift_register'left-1 downto 0) & spi_fpga_in.spi_data_in;
+            if bit_counter = 7 then
+                rx_byte     <= rx_shift_register & spi_fpga_in.spi_data_in;
+                byte_toggle <= not byte_toggle;
+            end if;
+        end if;
+    end process receive;
+
+------------------------------------------
+    -- Data out changes on the rising edge right after the master has sampled it. The
+    -- clock to output delay holds the previous bit long enough for the master, and the
+    -- next bit then has almost a full spi clock period to reach the master.
+    transmit : process(spi_fpga_in.spi_clock, spi_fpga_in.spi_cs_in)
+    begin
+        if spi_fpga_in.spi_cs_in = '1' then
+            tx_shift_register <= (others => '1');
+        elsif rising_edge(spi_fpga_in.spi_clock) then
+            if bit_counter = 7 then
+                if to_gray(tx_fifo_read_index) /= tx_fifo_write_gray then
+                    tx_shift_register <= tx_fifo(tx_fifo_read_index);
+                else
+                    tx_shift_register <= (others => '0');
+                end if;
+            else
+                tx_shift_register <= tx_shift_register(tx_shift_register'left-1 downto 0) & '0';
+            end if;
+        end if;
+    end process transmit;
+
+    transmit_fifo_read : process(spi_fpga_in.spi_clock)
+    begin
+        if rising_edge(spi_fpga_in.spi_clock) then
+            if bit_counter = 7 and to_gray(tx_fifo_read_index) /= tx_fifo_write_gray then
+                tx_fifo_read_index <= (tx_fifo_read_index + 1) mod 4;
+            end if;
+        end if;
+    end process transmit_fifo_read;
+
+------------------------------------------
+    main : process(main_clock)
     begin
         if rising_edge(main_clock) then
-            create_spi_receiver(self , spi_fpga_in.spi_cs_in , spi_fpga_in.spi_clock , spi_fpga_in.spi_data_in , spi_fpga_out.spi_data_out , std_logic_vector(testidata));
-            if spi_tx_in.data_send_is_requested then
-                load_byte_to_transmit_buffer(self, spi_tx_in.data_to_be_sent_through_spi);
+            byte_toggle_sync      <= byte_toggle_sync(1 downto 0) & byte_toggle;
+            byte_is_done_pipeline <= byte_is_done_pipeline(1 downto 0) & (byte_toggle_sync(2) xor byte_toggle_sync(1));
+
+            if byte_toggle_sync(2) /= byte_toggle_sync(1) then
+                received_byte <= rx_byte;
             end if;
 
+            if spi_tx_in.data_send_is_requested then
+                tx_fifo(tx_fifo_write_index) <= spi_tx_in.data_to_be_sent_through_spi;
+                tx_fifo_write_index          <= (tx_fifo_write_index + 1) mod 4;
+                tx_fifo_write_gray           <= to_gray((tx_fifo_write_index + 1) mod 4);
+            end if;
         end if; --rising_edge
-    end process spi_receiver;	
+    end process main;
+------------------------------------------
 
 end rtl;
 --------------------------------------------------

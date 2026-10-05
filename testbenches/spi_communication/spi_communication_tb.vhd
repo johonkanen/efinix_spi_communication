@@ -8,12 +8,14 @@ library vunit_lib;
 context vunit_lib.vunit_context;
 
 entity spi_communication_tb is
-  generic (runner_cfg : string);
+  generic (runner_cfg : string;
+           -- spi clock period is g_spi_clock_divider+1 simulator clocks
+           g_spi_clock_divider : natural := 5);
 end;
 
 architecture vunit_simulation of spi_communication_tb is
 
-    package spi_transmitter_pkg is new work.spi_transmitter_generic_pkg generic map(g_clock_divider => 5);
+    package spi_transmitter_pkg is new work.spi_transmitter_generic_pkg generic map(g_clock_divider => g_spi_clock_divider);
     use spi_transmitter_pkg.all;
 
     constant clock_period      : time    := 1 ns;
@@ -33,6 +35,11 @@ architecture vunit_simulation of spi_communication_tb is
     signal packet_counter : natural := 0;
 
     constant write_leds_on_frame : bytearray := (x"04", x"00", x"01", x"ac", x"dc");
+
+    constant read_from_address_1_frame : bytearray := (x"02", x"00", x"01", x"00", x"00", x"00", x"00", x"00", x"00");
+
+    -- read command is 3 bytes, the response starts one byte after it
+    constant first_read_response_byte_index : natural := 4;
 
     constant number_of_streamed_words : natural := 10;
     -- streamed words start after the command echo, same as response[7:] in pyspi_test.py
@@ -81,6 +88,14 @@ begin
                 set_test_frame(stream_10_words_frame & write_leds_on_frame);
                 wait for simtime_in_clocks*clock_period;
                 check(user_led = "1111", "leds were not turned on");
+
+            elsif run("read from address") then
+                set_test_frame(read_from_address_1_frame);
+                wait for simtime_in_clocks*clock_period;
+                check_equal(
+                    received_bytes(first_read_response_byte_index) & received_bytes(first_read_response_byte_index + 1),
+                    std_logic_vector'(x"abcd"),
+                    "read response");
 
             elsif run("stream data from address") then
                 set_test_frame(stream_10_words_frame);

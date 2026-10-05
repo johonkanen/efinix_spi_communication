@@ -28,3 +28,7 @@ create_clock -period 8.3333 main_clock
 # set_input_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -min <MIN CALCULATION> [get_ports {spi_data_in}]
 # set_input_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -max <MAX CALCULATION> [get_ports {spi_data_out}]
 # set_input_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -min <MIN CALCULATION> [get_ports {spi_data_out}]
+
+# spi_clock from the FTDI clocks the spi shift registers directly, 30 MHz max
+create_clock -period 33.333 -name spi_clock [get_ports {spi_clock}]
+set_clock_groups -asynchronous -group {main_clock} -group {spi_clock}

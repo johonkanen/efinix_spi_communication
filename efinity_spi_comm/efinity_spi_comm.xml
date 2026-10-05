@@ -13,7 +13,6 @@
         <efx:design_file name="../source/serial_protocol_generic_pkg.vhd" version="default" library="default" />
         <efx:design_file name="../source/spi_secondary.vhd" version="default" library="default" />
         <efx:design_file name="../source/spi_communication_protocol_pkg.vhd" version="default" library="default" />
-        <efx:design_file name="../source/spi_receiver/spi_receiver_pkg.vhd" version="default" library="default" />
         <efx:top_vhdl_arch name="rtl" />
     </efx:design_info>
     <efx:constraint_info>
