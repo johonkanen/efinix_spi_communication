@@ -4,8 +4,6 @@ LIBRARY ieee  ;
     USE ieee.std_logic_1164.all  ; 
     use ieee.math_real.all;
 
-    use work.clock_divider_pkg.all;
-
 library vunit_lib;
 context vunit_lib.vunit_context;
 
@@ -34,28 +32,62 @@ architecture vunit_simulation of spi_communication_tb is
     signal capture_buffer : std_logic_vector(15 downto 0);
     signal packet_counter : natural := 0;
 
-    /* constant test_frame : bytearray :=(x"04", x"00", x"01", x"ac", x"dc"); */
-    /* constant test_frame : bytearray :=(x"02", x"00", x"01", x"ac", x"dc",x"dc", x"dc", x"dc"); */
-    constant test_frame : bytearray :=(x"05", x"00", x"01", x"00", x"00",x"0a",
-                                        x"00",x"00",
-                                        x"00",x"00",
-                                        x"00",x"00",
-                                        x"00",x"00",
-                                        x"00",x"00",
-                                        x"00",x"00",
-                                        x"00",x"00",
-                                        x"00",x"00",
-                                        x"00",x"00",
-                                        x"00",x"00");
+    constant write_leds_on_frame : bytearray := (x"04", x"00", x"01", x"ac", x"dc");
+
+    constant number_of_streamed_words : natural := 10;
+    -- streamed words start after the command echo, same as response[7:] in pyspi_test.py
+    constant first_streamed_byte_index : natural := 7;
+    -- stream command for 10 words from address 1, followed by dummy bytes to clock out the response
+    constant stream_10_words_frame : bytearray := (x"05", x"00", x"01", x"00", x"00", x"0a",
+                                                    x"00",
+                                                    x"00",x"00",
+                                                    x"00",x"00",
+                                                    x"00",x"00",
+                                                    x"00",x"00",
+                                                    x"00",x"00",
+                                                    x"00",x"00",
+                                                    x"00",x"00",
+                                                    x"00",x"00",
+                                                    x"00",x"00",
+                                                    x"00",x"00");
+
+    signal test_frame : bytearray(0 to 31) := (others => x"00");
+    signal test_frame_length : natural := 0;
+
+    signal received_bytes : bytearray(0 to 63) := (others => x"00");
+    signal number_of_received_bytes : natural := 0;
+    signal received_bit_counter : natural range 0 to 7 := 0;
 
 begin
 
 ------------------------------------------------------------------------
     simtime : process
+        procedure set_test_frame(frame : bytearray) is
+        begin
+            test_frame(0 to frame'length-1) <= frame;
+            test_frame_length <= frame'length;
+        end set_test_frame;
     begin
         test_runner_setup(runner, runner_cfg);
-        wait for simtime_in_clocks*clock_period;
-        check(user_led = "1111", "leds were not turned on");
+
+        while test_suite loop
+            if run("write turns leds on") then
+                set_test_frame(write_leds_on_frame);
+                wait for simtime_in_clocks*clock_period;
+                check(user_led = "1111", "leds were not turned on");
+
+            elsif run("stream data from address") then
+                set_test_frame(stream_10_words_frame);
+                wait for simtime_in_clocks*clock_period;
+                for i in 0 to number_of_streamed_words-1 loop
+                    check_equal(
+                        received_bytes(first_streamed_byte_index + 2*i) & received_bytes(first_streamed_byte_index + 2*i + 1),
+                        std_logic_vector'(x"abcd"),
+                        "streamed word " & integer'image(i));
+                end loop;
+            end if;
+        end loop;
+
         test_runner_cleanup(runner); -- Simulation ends here
         wait;
     end process simtime;	
@@ -72,7 +104,7 @@ begin
         is
         begin
             create_spi_transmitter(spi_transmitter, spi_data_out);
-            if ready_to_receive_packet(spi_transmitter) and packet_counter < test_frame'high  then
+            if ready_to_receive_packet(spi_transmitter) and packet_counter < test_frame_length-1  then
                 transmit_byte(spi_transmitter, test_frame(packet_counter+1));
                 packet_counter <= packet_counter + 1;
             end if;
@@ -106,6 +138,14 @@ begin
     begin
         if rising_edge(spi_transmitter.spi_clock) then
             capture_buffer <= capture_buffer(14 downto 0) & spi_data_out;
+
+            if received_bit_counter = 7 then
+                received_bit_counter <= 0;
+                received_bytes(number_of_received_bytes) <= capture_buffer(6 downto 0) & spi_data_out;
+                number_of_received_bytes <= number_of_received_bytes + 1;
+            else
+                received_bit_counter <= received_bit_counter + 1;
+            end if;
         end if; --rising_edge
     end process catch_spi;	
 ------------------------------------------------------------------------
