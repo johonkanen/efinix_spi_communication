@@ -28,6 +28,14 @@ tb = lib.test_bench("spi_communication_tb")
 for spi_mhz, clocks_per_bit in [(30, 4), (15, 8), (7.5, 16)]:
     tb.add_config(name=f"spi_{spi_mhz}MHz", generics=dict(g_spi_clock_divider=clocks_per_bit - 1))
 
+# fpga_spi_communications, the spi counterpart of fpga_communication's
+# fpga_communications, with 32 bit data
+lib.add_source_files(ROOT / "source/spi_communications.vhd")
+lib.add_source_files(ROOT / "testbenches/spi_communications/fpga_spi_communications_tb.vhd")
+spi_comm_tb = lib.test_bench("fpga_spi_communications_tb")
+for spi_mhz, half_period in [(15, 4), (7.5, 8), (3.75, 16)]:
+    spi_comm_tb.add_config(name=f"spi_{spi_mhz}MHz", generics=dict(g_spi_half_period=half_period))
+
 VU.set_sim_option("nvc.sim_flags", ["-w"])
 
 VU.main()
